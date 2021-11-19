@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
+    <title>Utilizing state machines in front-end development</title>
+    <meta name="author" content="Joonas Tiala" />
+
+    <link rel="stylesheet" href="reveal-js/dist/reset.css" />
+    <link rel="stylesheet" href="reveal-js/dist/reveal.css" />
+    <link rel="stylesheet" href="reveal-js/dist/theme/blood.css" />
+
+    <link rel="stylesheet" href="reveal-js/plugin/highlight/dracula.css" />
+    <style>
+      .red {
+        color: #a23;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <h3>
+            Utilizing
+            <span class="red">state machines</span> in front-end development
+          </h3>
+          <p style="font-size: 0.6em">
+            Joonas Tiala<br />
+            <span style="font-size: 0.8em">Software Designer @ Solita</span>
+          </p>
+
+          <aside class="notes">
+            <ul>
+              <li>
+                Hello there folks. My name is Joonas Tiala, I'm a Software
+                Designer located in Oulu, doing mostly full stack development.
+              </li>
+              <li>
+                Most recently I've been working with TypeScript and React on the
+                front and Java on the back. In the recent years I've also done
+                some nodejs backend, some AWS stuff and some DevOps stuff.
+                Mostly React front tho.
+              </li>
+              <li>
+                The title of the presentation is Utilizing state machines in
+                front-end development. In my current project we have been doing
+                just that quite a bit in last few years.
+              </li>
+            </ul>
+          </aside>
+        </section>
+
+        <section>
+          <section>
+            <h2>What are <span class="red">finite</span> state machines?</h2>
+
+            <aside class="notes">
+              <ul>
+                <li>
+                  Ok then, to the meat and potatoes. I will first give you a
+                  quick 101 lecture of state machines and statecharts and after
+                  that we will take a look at some real world examples on how to
+                  use state machines in React web app context using a library
+                  called XState. And actually also without using any library at
+                  all.
+                </li>
+                <li>
+                  Let us start with some theory. If you studied computer science
+                  at the university or some other school, you might remember
+                  this stuff from class. If not, you still might have heard the
+                  term Finite State Machine or FSM for short.
+                </li>
+                <li>So, what are the FSMs?</li>
+              </ul>
+            </aside>
+          </section>
+
+          <section>
+            <blockquote
+              cite="https://en.wikipedia.org/wiki/Finite-state_machine"
+            >
+              &ldquo;an abstract machine that can be in
+              <span class="fragment highlight-red">exactly one</span>
+              of a finite number of states at any given time. The FSM can
+              <span class="fragment highlight-red"
+                >change from one state to another</span
+              >
+              in response to some
+              <span class="fragment highlight-red">external inputs</span>; the
+              change from one state to another is called a
+              <span class="fragment highlight-red">transition</span>. An FSM is
+              defined by a list of its
+              <span class="fragment highlight-red">states</span>, its
+              <span class="fragment highlight-red">initial state</span>, and the
+              <span class="fragment highlight-red"
+                >conditions for each transition</span
+              >.&rdquo;
+            </blockquote>
+
+            <aside class="notes">
+              <ul>
+                <li>
+                  According to Wikipedia, FSM is (Read the definition out loud,
+                  press space to animate the highlights)
+                </li>
+                <li>
+                  The nice thing about state machines is that they are really
+                  convinient to present visually
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section
+            data-background-iframe="https://stately.ai/viz/embed/bb6c213d-d3d0-4a0f-98a5-7acb9985311e?mode=viz&panel=code&readOnly=0&showOriginalLink=0&controls=0"
+          >
+            <aside class="notes">
+              <ul>
+                <li>
+                  For example, this is a state machine that represents a traffic
+                  light. Or at least a super simplified version of a traffic
+                  light.
+                </li>
+                <li>
+                  The machine can be in three different states, green, yellow or
+                  red. The machine can be in only one of these states at the
+                  time.
+                </li>
+                <li>
+                  The little dot with arrow on the left marks the initial state,
+                  in our case it's the green state. So, the green state is
+                  activated, when the machine is excecuted.
+                </li>
+                <li>
+                  The arrows between states are the possible transitions. In
+                  this very simple machine, every state have only one possible
+                  transition.
+                </li>
+                <li>
+                  And finally the pill-shaped boxes are the external inputs.
+                  Lets call them events from now on. We only have one event
+                  called timer, that triggers a transition from one state to
+                  another. Notice how the same event transitions to a different
+                  state based on the current state.
+                </li>
+                <li>
+                  This visualization is done with XState Visualizer, more on
+                  that later but this should be interactive, let's see: (Demo)
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section
+            data-background-iframe="https://stately.ai/viz/embed/026e3a1c-57e5-4fc3-85d1-1bd4e6380d3a?mode=viz&panel=code&readOnly=0&showOriginalLink=0&controls=0"
+          >
+            <aside class="notes">
+              <ul>
+                <li>
+                  Here's an another example. This one is for a dimmable light
+                  switch.
+                </li>
+                <li>
+                  We a couple of new conecpts here. First, when we enter the
+                  intial state, off, we immediately trigger an action. Action
+                  are fire-and-forget side effects that doesn't affect the
+                  machine itself. This one is an entry action, meaning it will
+                  get triggerd when we enter the state. And calling the light
+                  switch API or something that controls the actual light in real
+                  world.
+                </li>
+                <li>
+                  We could also have actions for exiting a state or actions to
+                  be launched while the machine is transitioning to an another
+                  state.
+                </li>
+                <li>
+                  When we act on REDUCE_BRIGHTNESS or ADD_BRIGHTNESS events on
+                  the on state, we'll get transitioned to dim or brighten state.
+                  Those states have entry actions that control the actual light
+                  and after that we have a transient transiotion, which means
+                  that we'll transition to another state right away. So back to
+                  on state we go.
+                </li>
+              </ul>
+            </aside>
+          </section>
+        </section>
+
+        <section>
+          <section>
+            <h2>What are state<span class="red">charts</span>?</h2>
+
+            <aside class="notes">
+              <ul>
+                <li>So, next up statecharts. What are statecharts?</li>
+                <li>
+                  In many ways, statecharts are the “bigger brother” of state
+                  machines. A statechart is essentially a state machine that
+                  allows any state to include more machines, in a hierarchical
+                  fashion.
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section
+            data-background-iframe="https://stately.ai/viz/embed/18750c57-c736-4f1d-bb3f-12e716c0c1ff?mode=viz&panel=code&readOnly=0&showOriginalLink=0&controls=0"
+          >
+            <aside class="notes">
+              <ul>
+                <li>
+                  If we take the traffic light example from before, and make it
+                  a bit more complicated, it might look something like this.
+                </li>
+                <li>
+                  The initial state of the machine is offline. When we send the
+                  turn on event to the machine, it transitions to red state.
+                  Ignore the stuff inside red for now.
+                </li>
+                <li>
+                  After 6 seconds timer, a transision to redAndYellow state
+                  occurs. At least here in Finland traffic lights light up red
+                  and yellow at the same time before going to green. From green
+                  we go to yellow and the back to red.
+                </li>
+                <li>
+                  The turn off event triggers transition to off state from any
+                  state of the machine. It's basically a global or root-level
+                  transition that XState allows us to do. Its the same as giving
+                  every state a transition to the off state, it just makes our
+                  job a bit easier and the visual representation a bit clearer.
+                </li>
+                <li>
+                  Lastly, the red state is it's own little state machine, with
+                  its own states, initial state, events and so on. When the
+                  parent machine reaches red, the child machine gets executed
+                  and starts from its intial state.
+                </li>
+                <li>
+                  So basically when the main traffic lights are red, the
+                  pedestrian traffic lights become green after a bit of a delay
+                  for safety. Then they turn red, and the parent machine
+                  continues.
+                </li>
+              </ul>
+            </aside>
+          </section>
+        </section>
+
+        <section>
+          <section>
+            <h2>
+              <span class="red">When</span>, <span class="red">why</span> and
+              <span class="red">how</span> to use state machines in front-end
+              code?
+            </h2>
+
+            <aside class="notes">
+              <ul>
+                <li>
+                  Great. Now you know some of the theory behind state machines.
+                  Now what? How can you utilize this new knowledge in your
+                  front-end code?
+                </li>
+                <li>Lets create a React component for demonstration.</li>
+              </ul>
+            </aside>
+          </section>
+
+          <section data-auto-animate>
+            <pre data-id="code-animation">
+              <code class="hljs jsx" data-trim data-line-numbers>
+                <script type="text/template">
+                  const SearchForm = () => {
+                    return (
+                      <div />
+                    );
+                  };
+                </script>
+              </code>
+            </pre>
+
+            <aside class="notes">
+              <ul>
+                <li>
+                  Let's start with this empty React component called SearchForm
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section data-auto-animate>
+            <pre data-id="code-animation">
+              <code class="hljs jsx" data-trim data-line-numbers="2-3|4-8|12-14|15-17|19-20|21-22|">
+                <script type="text/template">
+                  const SearchForm = () => {
+                    const [keyword, setKeyword] = useState("");
+                    const [results, setResults] = useState([]);
+                  
+                    const search = () => {
+                      fetchResults(keyword)
+                        .then((results) => setResults(results));
+                    };
+                  
+                    return (
+                      <div>
+                        <input
+                          onChange={(event) => setKeyword(event.target.value)}
+                        />
+                        <button onClick={search}>
+                          Search
+                        </button>
+                        
+                        {results.length > 0 &&
+                          results.map((result) => <p>{result}</p>)}
+                        {results.length === 0 &&
+                          <p>Sorry! No results.</p>}
+                      </div>
+                    );
+                  };
+                </script>
+              </code>
+            </pre>
+
+            <aside class="notes">
+              <ul>
+                <li>
+                  We will probably want to store the keyword and the search
+                  results somewhere, lets use useState for that.
+                </li>
+                <li>
+                  We'll need to execute the search somehow. Lets add a function
+                  that fetches the search results from the API and stores them
+                  in our components state.
+                </li>
+                <li>
+                  We need a few form elements, an input for the search field and
+                  a button to execute the search.
+                </li>
+                <li>
+                  Finally, we want to display the results, if any and if not,
+                  print out a message for that.
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section data-auto-animate>
+            <pre data-id="code-animation">
+              <code class="hljs jsx" data-trim data-line-numbers="4|7,11|19,23|">
+                <script type="text/template">
+                  const SearchForm = () => {
+                    const [keyword, setKeyword] = useState("");
+                    const [results, setResults] = useState([]);
+                    const [isLoading, setIsLoading] = useState(false);
+                  
+                    const search = () => {
+                      setIsLoading(true);
+                  
+                      fetchResults(keyword)
+                        .then((results) => setResults(results))
+                        .finally(() => setIsLoading(false));
+                    };
+                  
+                    return (
+                      <div>
+                        <input
+                          onChange={(event) => setKeyword(event.target.value)}
+                        />
+                        <button onClick={search} disabled={isLoading}>
+                          Search
+                        </button>
+                        
+                        {isLoading && <p>Searching...</p>}
+                        {results.length > 0 &&
+                          results.map((result) => <p>{result}</p>)}
+                        {results.length === 0 &&
+                          <p>Sorry! No results.</p>}
+                      </div>
+                    );
+                  };
+                </script>
+              </code>
+            </pre>
+
+            <aside class="notes">
+              <ul>
+                <li>
+                  How about loading state? We will probably want to show a
+                  spinner or something while the search is executing.
+                </li>
+                <li>
+                  Let's do that by adding a new useState call, setting the
+                  loading state in the search function and disabling the button
+                  and showing the spinner while the app is loading.
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section data-auto-animate>
+            <pre data-id="code-animation">
+              <code class="hljs jsx" data-trim data-line-numbers="5|9,13|27|26-31|">
+                <script type="text/template">
+                  const SearchForm = () => {
+                    const [keyword, setKeyword] = useState("");
+                    const [results, setResults] = useState([]);
+                    const [isLoading, setIsLoading] = useState(false);
+                    const [hasError, setHasError] = useState(false);
+                  
+                    const search = () => {
+                      setIsLoading(true);
+                      setHasError(false);
+                  
+                      fetchResults(keyword)
+                        .then((results) => setResults(results))
+                        .catch(() => setHasError(true))
+                        .finally(() => setIsLoading(false));
+                    };
+                  
+                    return (
+                      <div>
+                        <input
+                          onChange={(event) => setKeyword(event.target.value)}
+                        />
+                        <button onClick={search} disabled={isLoading}>
+                          Search
+                        </button>
+                        
+                        {isLoading && <p>Searching...</p>}
+                        {hasError && <p>Oh no!</p>}
+                        {results.length > 0 &&
+                          results.map((result) => <p>{result}</p>)}
+                        {results.length === 0 &&
+                          <p>Sorry! No results.</p>}
+                      </div>
+                    );
+                  };
+                </script>
+              </code>
+            </pre>
+
+            <aside class="notes">
+              <ul>
+                <li>
+                  Error handling! We need error handling! Lets do this, this and
+                  this. Now we are handling the errors.
+                </li>
+                <li>
+                  How does the search form look like before the user has
+                  searched anything? It just says "Sorry, no results", right?
+                  I'm sure we don't want this. We could add a new bit of state,
+                  that keeps count if the user has searched or not, but lets not
+                  do that quite yet.
+                </li>
+                <li>
+                  Can the isLoading and hasError boolean flags be both true at
+                  the same time? How about the new hasSearched flag? Which
+                  combinations of these three are possible and what should we
+                  print out for each combination?
+                </li>
+                <li>
+                  Every boolean flag or a piece of state we are adding
+                  multiplies the possible or impossible combinatios. Every piece
+                  makes the component more complicated and more difficult to
+                  comprehend. Still, it's our job to make sure the app functions
+                  well in every situation.
+                </li>
+                <li>So, how could we fix this?</li>
+              </ul>
+            </aside>
+          </section>
+        </section>
+
+        <section>
+          <section>
+            <h2>State machines to <span class="red">the rescue</span>!</h2>
+
+            <aside class="notes">
+              <ul>
+                <li>State machines! You knew it!</li>
+              </ul>
+            </aside>
+          </section>
+
+          <section data-auto-animate>
+            <pre data-id="code-animation">
+              <code class="hljs jsx" data-trim data-line-numbers="|1-7|10-12|15,20-21,23|38-45|">
+                <script type="text/template">
+                  const states = {
+                    INITIAL: "INITIAL",
+                    LOADING: "LOADING",
+                    FAILURE: "FAILURE",
+                    NO_RESULTS: "NO_RESULTS",
+                    SHOW_RESULTS: "SHOW_RESULTS",
+                  };
+                  
+                  const SearchForm = () => {
+                    const [state, setState] = useState(states.INITIAL);
+                    const [keyword, setKeyword] = useState("");
+                    const [results, setResults] = useState([]);
+                  
+                    const search = () => {
+                      setState(states.LOADING);
+                  
+                      fetchResults(keyword)
+                        .then((results) => {
+                          setResults(results);
+                          setState(results.length > 0 
+                            ? states.SHOW_RESULTS : states.NO_RESULTS);
+                        })
+                        .catch((error) => setState(states.FAILURE));
+                    };
+                  
+                    return (
+                      <div>
+                        <input
+                          onChange={(event) => setKeyword(event.target.value)}
+                        />
+                        <button
+                          onClick={search}
+                          disabled={state === states.LOADING}
+                        >
+                          Search
+                        </button>
+
+                        {state === states.INITIAL &&
+                          <p>Hi! Enter keyword please.</p>}
+                        {state === states.LOADING && <p>Searching...</p>}
+                        {state === states.FAILURE && <p>Oh no!</p>}
+                        {state === states.NO_RESULTS &&
+                          <p>Sorry! No results.</p>}
+                        {state === states.SHOW_RESULTS &&
+                          results.map((result) => <p>{result}</p>)}
+                      </div>
+                    );
+                  };
+                </script>
+              </code>
+            </pre>
+
+            <aside class="notes">
+              <ul>
+                <li>
+                  First, let's define the states the component can be in. We'll
+                  use this object for easier autocompletion. If we were using
+                  TypeScript, an enum would be even better.
+                </li>
+                <li>
+                  Now we can use just one useState for the state and one for
+                  keyword and results each, like before.
+                </li>
+                <li>
+                  We'll always just set the state to one of the predefined
+                  values.
+                </li>
+                <li>
+                  Now generating the output is much easier since we know all the
+                  possible states the component can be in. The rendering here
+                  isn't that pretty to be honest, but that's not the point here.
+                  We know now that we are handling all the cases.
+                </li>
+                <li>
+                  Much better already. But it's not quite a state machine yet.
+                </li>
+              </ul>
+            </aside>
+          </section>
+          <section>
+            <blockquote
+              cite="https://en.wikipedia.org/wiki/Finite-state_machine"
+            >
+              &ldquo;an abstract machine that can be in
+              <span class="fragment highlight-green strike">exactly one</span>
+              of a finite number of states at any given time. The FSM can
+              <span class="fragment highlight-green strike"
+                >change from one state to another</span
+              >
+              in response to some
+              <span class="fragment highlight-green strike"
+                >external inputs</span
+              >; the change from one state to another is called a
+              <span class="fragment highlight-green strike">transition</span>.
+              An FSM is defined by a list of its
+              <span class="fragment highlight-green strike">states</span>, its
+              <span class="fragment highlight-green strike">initial state</span
+              >, and the
+              <span class="fragment highlight-red"
+                >conditions for each transition</span
+              >.&rdquo;
+            </blockquote>
+
+            <aside class="notes">
+              <ul>
+                <li>Let's refer back to the definition of a FSM.</li>
+                <li>
+                  We know that our component now can be only in one state of a
+                  finite set.
+                </li>
+                <li>We transition to different states based on events.</li>
+                <li>Our initial state is set.</li>
+                <li>
+                  But we haven't defined the conditions for each trasition yet.
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section data-auto-animate>
+            <pre data-id="code-animation">
+              <code class="hljs jsx" data-trim data-line-numbers="|9-15|17-18|26,36|">
+                <script type="text/template">
+                  const states = {
+                    INITIAL: "INITIAL",
+                    LOADING: "LOADING",
+                    FAILURE: "FAILURE",
+                    NO_RESULTS: "NO_RESULTS",
+                    SHOW_RESULTS: "SHOW_RESULTS",
+                  };
+                  
+                  const transitions = {
+                    INITIAL: ["LOADING"],
+                    LOADING: ["FAILURE", "NO_RESULTS", "SHOW_RESULTS"],
+                    FAILURE: [],
+                    NO_RESULTS: [],
+                    SHOW_RESULTS: [],
+                  };
+
+                  const validTransition = (before, after) =>
+                    transitions[before].includes(after);
+                  
+                  const SearchForm = () => {
+                    const [state, setState] = useState(states.INITIAL);
+                    const [keyword, setKeyword] = useState("");
+                    const [results, setResults] = useState([]);
+                  
+                    const search = () => {
+                      if (validTransition(state, states.LOADING)) {
+                        setState(states.LOADING);
+                    
+                        fetchResults(keyword)
+                          .then((results) => {
+                            setResults(results);
+                            setState(results.length > 0 
+                              ? states.SHOW_RESULTS : states.NO_RESULTS);
+                          })
+                          .catch((error) => setState(states.FAILURE));
+                      }
+                    };
+                  
+                    return (
+                      <div>
+                        <input
+                          onChange={(event) => setKeyword(event.target.value)}
+                        />
+                        <button
+                          onClick={search}
+                          disabled={state === states.LOADING}
+                        >
+                          Search
+                        </button>
+
+                        {state === states.INITIAL &&
+                          <p>Hi! Enter keyword please.</p>}
+                        {state === states.LOADING && <p>Searching...</p>}
+                        {state === states.FAILURE && <p>Oh no!</p>}
+                        {state === states.NO_RESULTS &&
+                          <p>Sorry! No results.</p>}
+                        {state === states.SHOW_RESULTS &&
+                          results.map((result) => <p>{result}</p>)}
+                      </div>
+                    );
+                  };
+                </script>
+              </code>
+            </pre>
+
+            <aside class="notes">
+              <ul>
+                <li>We could fix that by doing something like this.</li>
+                <li>
+                  Lets define to which state we can transition from every state.
+                </li>
+                <li>
+                  To make our job easier, lets add a utility function to check
+                  if a transition from state a to b is valid.
+                </li>
+                <li>
+                  And then check if the transition to loading is available
+                  before transitioning. We should also do the check for the
+                  other transitions but lets leave that for another day.
+                </li>
+                <li>
+                  Nice! Now we pretty much have a finite state machine in place
+                  and the code is much easier comprehend, extend and refactor.
+                </li>
+              </ul>
+            </aside>
+          </section>
+        </section>
+
+        <section>
+          <section>
+            <h2>Enter <span class="red">XState</span></h2>
+
+            <aside class="notes">
+              <ul>
+                <li>
+                  Not too shabby. I'm sure our component and the whole imaginary
+                  app could be improved a lot pretty easily by just following
+                  the specification of finite state machines, doing the work by
+                  hand. FSM's have a lot more features we didn't implement yet,
+                  so it might be worth your while to take a look at open source
+                  implementations of state machines rather than do everything by
+                  yourself. Especially when you want to create statecharts they
+                  can be a lot of work.
+                </li>
+                <li>
+                  I've been using a library called XState quite a bit in recent
+                  years and I mostly like it. Its pretty popular and widely
+                  accepted as the way to do state machines and statecharts in
+                  JavaScript ecosystem.
+                </li>
+                <li>
+                  It allows you to create state machines using a configuration
+                  object, which I will show you soon, and also execute the
+                  machines.
+                </li>
+                <li>
+                  Lets refactor our search form to use Xstate instead of our own
+                  FSM implementation.
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section
+            data-background-iframe="https://stately.ai/viz/embed/f55d5714-f108-4230-86e9-6f85a3cdd370?mode=viz&panel=code&readOnly=0&showOriginalLink=0&controls=0"
+          >
+            <aside class="notes">
+              <ul>
+                <li>
+                  The visual representatios of the state machine could look
+                  something like this.
+                </li>
+                <li>
+                  From the intial state we transition to loading via search
+                  event, send by clicking the search button.
+                </li>
+                <li>
+                  Depending on the result of the fetching, which is not part of
+                  the machine, we transiotion to one of the three final states,
+                  indicated by the little squares in front of the state name.
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section data-auto-animate>
+            <pre data-id="code-animation">
+              <code class="hljs jsx" data-trim data-line-numbers="|1|3|5|6|8-12|13-26|25|16-19|20-23|39-46|28-36|">
+                <script type="text/template">
+                  import { createMachine } from "xstate";
+
+                  const searchFormMachine = createMachine(
+                    {
+                      id: "Search Form",
+                      initial: "initial",
+                      states: {
+                        initial: {
+                          on: {
+                            SEARCH: "loading",
+                          },
+                        },
+                        loading: {
+                          on: {
+                            SUCCESS: [
+                              {
+                                cond: "hasResults",
+                                target: "showResults",
+                              },
+                              {
+                                cond: "hasNoResults",
+                                target: "noResults",
+                              },
+                            ],
+                            ERROR: "failure",
+                          },
+                        },
+                        failure: {
+                          type: "final",
+                        },
+                        noResults: {
+                          type: "final",
+                        },
+                        showResults: {
+                          type: "final",
+                        },
+                      },
+                    },
+                    {
+                      guards: {
+                        hasResults: 
+                          (context, event) => event.results.length > 0,
+                        hasNoResults: 
+                          (context, event) => event.results.length === 0,
+                      },
+                    }
+                  );
+                </script>
+              </code>
+            </pre>
+
+            <aside class="notes">
+              <ul>
+                <li>
+                  The XState configuration would look something like this.
+                </li>
+                <li>
+                  First we import the createMachine function from the library,
+                  then pass our configuration object to it.
+                </li>
+                <li>
+                  The config has id of the machine, the intial state, and
+                  definitions of the states.
+                </li>
+                <li>
+                  Each state definition contains all the possible transitions
+                  from the state to some another state. From the initial state
+                  we transition to the loading state when SEARCH event occurs.
+                </li>
+                <li>
+                  The loading state transitions to failure on ERROR event and to
+                  show results or no results depending on the fetch result.
+                </li>
+                <li>
+                  The conditions or the guards as they are called in XState are
+                  defined in the bottom of the config.
+                </li>
+                <li>Finally, the final states are marked as final.</li>
+                <li>
+                  So, the whole state machine is just 47 rows of configuration
+                  object code. Not too bad.
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section data-auto-animate>
+            <pre data-id="code-animation">
+              <code class="hljs jsx" data-trim data-line-numbers="|1-2|5|6-7|10|15,17|27,32-39|">
+                <script type="text/template">
+                  import { useMachine } from "@xstate/react";
+                  import { searchFormMachine } from "...";
+
+                  const SearchForm = () => {
+                    const [state, send] = useMachine(searchFormMachine);
+                    const [keyword, setKeyword] = useState("");
+                    const [results, setResults] = useState([]);
+
+                    const search = () => {
+                      send("SEARCH");
+
+                      fetchResults(keyword)
+                        .then((results) => {
+                          setResults(results);
+                          send({ type: "SUCCESS", data: results });
+                        })
+                        .catch((error) => send("ERROR"));
+                    };
+
+                    return (
+                      <div>
+                        <input
+                          onChange={(event) => setKeyword(event.target.value)}
+                        />
+                        <button
+                          onClick={search}
+                          disabled={state.value === "loading"}
+                        >
+                          Search
+                        </button>
+
+                        {state.value === "initial" &&
+                          <p>Hi! Enter keyword please.</p>}
+                        {state.value === "loading" && <p>Searching...</p>}
+                        {state.value === "failure" && <p>Oh no!</p>}
+                        {state.value === "noResults" &&
+                          <p>Sorry! No results.</p>}
+                        {state.value === "showResults" &&
+                          results.map((result) => <p>{result}</p>)}
+                      </div>
+                    );
+                  };
+                </script>
+              </code>
+            </pre>
+
+            <aside class="notes">
+              <ul>
+                <li>
+                  In the React component, we'll need to import useMachine from
+                  xstate's React utilities and our machine code.
+                </li>
+                <li>
+                  Then we just get the current state and a send event function
+                  from the useMachine hook. And voila, we have the state
+                  available in our component.
+                </li>
+                <li>
+                  We'll still use keyword and results like we did before, for
+                  now. Now we just send the SEARCH event to the machine, when we
+                  start the fetching. And send SUCCESS or ERROR events when we
+                  get the results. Notice, that we can send data to the machine
+                  as part of the event.
+                </li>
+                <li>
+                  In the return, we can get the current state name from
+                  state.value and render correct stuff.
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section data-auto-animate>
+            <pre data-id="code-animation">
+              <code class="hljs jsx" data-trim data-line-numbers="|7-10|15-19|28-30,35-37|">
+                <script type="text/template">
+                  import { createMachine, assign } from "xstate";
+
+                  const searchFormMachine = createMachine(
+                    {
+                      id: "Search Form",
+                      initial: "initial",
+                      context: {
+                        keyword: "",
+                        results: [],
+                      },
+                      states: {
+                        initial: {
+                          on: {
+                            SEARCH: "loading",
+                            SET_KEYWORD: {
+                              actions: assign({
+                                keyword: (context, event) => event.keyword,
+                              }),
+                            },
+                          },
+                        },
+                        loading: {
+                          on: {
+                            SUCCESS: [
+                              {
+                                cond: "hasResults",
+                                target: "showResults",
+                                actions: assign({
+                                  results: (context, event) => event.results,
+                                }),
+                              },
+                              {
+                                cond: "hasNoResults",
+                                target: "noResults",
+                                actions: assign({
+                                  results: (context, event) => [],
+                                }),
+                              },
+                            ],
+                            ERROR: "failure",
+                          },
+                        },
+                        failure: {
+                          type: "final",
+                        },
+                        noResults: {
+                          type: "final",
+                        },
+                        showResults: {
+                          type: "final",
+                        },
+                      },
+                    },
+                    {
+                      guards: {
+                        hasResults: (context, event) => event.results.length > 0,
+                        hasNoResults: (context, event) => event.results.length === 0,
+                      },
+                    }
+                  );
+                </script>
+              </code>
+            </pre>
+
+            <aside class="notes">
+              <ul>
+                <li>We can make it better.</li>
+                <li>
+                  We define a context for the state machine, with empty initial
+                  values. The context is like a data store for the machine.
+                </li>
+                <li>
+                  Then we listen to SET_KEYWORD event on initial state. When it
+                  occurs, we assing its data to our machines context.
+                </li>
+                <li>
+                  And on SUCCESS event, we save the results to the context
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section data-auto-animate>
+            <pre data-id="code-animation">
+              <code class="hljs jsx" data-trim data-line-numbers="|10|12|20-24|">
+                <script type="text/template">
+                  import { useMachine } from "@xstate/react";
+                  import { searchFormMachine } from "...";
+
+                  const SearchForm = () => {
+                    const [state, send] = useMachine(searchFormMachine);
+
+                    const search = () => {
+                      send("SEARCH");
+
+                      fetchResults(state.context.keyword)
+                        .then((results) => {
+                          send({ type: "SUCCESS", data: results });
+                        })
+                        .catch((error) => send("ERROR"));
+                    };
+
+                    return (
+                      <div>
+                        <input
+                          onChange={(event) =>
+                            send({
+                              type: "SET_KEYWORD",
+                              data: event.target.value,
+                            })
+                          }
+                        />
+                        <button
+                          onClick={search} disabled={state.value === "loading"}
+                        >
+                          Search
+                        </button>
+
+                        {state.value === "initial" &&
+                          <p>Hi! Enter keyword please.</p>}
+                        {state.value === "loading" && <p>Searching...</p>}
+                        {state.value === "failure" && <p>Oh no!</p>}
+                        {state.value === "noResults" &&
+                          <p>Sorry! No results.</p>}
+                        {state.value === "showResults" &&
+                          state.context.results.map((result) => <p>{result}</p>)}
+                      </div>
+                    );
+                  };
+                </script>
+              </code>
+            </pre>
+
+            <aside class="notes">
+              <ul>
+                <li>
+                  On the component we may now remove the react's useState hooks
+                  for keyword and results and access the machines context using
+                  state.context
+                </li>
+                <li>
+                  We were already sending the results as part of the SUCCESS
+                  event, so no changes required here.
+                </li>
+                <li>
+                  On the inputs onChange handler we can straight up call the
+                  send function and send the SET_KEYWORD event with the inputs
+                  value as data.
+                </li>
+                <li>
+                  Cool, now the component's whole state is handled by XState. We
+                  could even move the fetching to be a part of the machine
+                  (maybe a reusable sub-machine?).
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section
+            data-background-iframe="https://stately.ai/viz/embed/46947d72-4552-4ede-803b-d63a13b0b91e?mode=viz&panel=code&readOnly=0&showOriginalLink=0&controls=0"
+          >
+            <aside class="notes">
+              <ul>
+                <li>
+                  And by the way, our machine looks like this now. The
+                  SET_KEYWORD event assignes the data but doesn't trigger a
+                  transition while success assigns and transitions.
+                </li>
+              </ul>
+            </aside>
+          </section>
+        </section>
+
+        <section>
+          <section>
+            <h2>More <span class="red">examples</span></h2>
+          </section>
+
+          <section
+            data-background-iframe="https://stately.ai/registry"
+          ></section>
+
+          <section
+            data-background-color="white"
+            data-background-iframe="https://xstate-catalogue.com"
+          ></section>
+        </section>
+
+        <section>
+          <h2><span class="red">Pros</span> and cons</h2>
+          <ul>
+            <li class="fragment fade-left">Add formalism to your code</li>
+            <li class="fragment fade-left">Makes your code more robust</li>
+            <li class="fragment fade-left">
+              Separates (some of) your app's logic from the view layer
+            </li>
+            <li class="fragment fade-left">Great way to make reusable logic</li>
+            <li class="fragment fade-left">Easy to represent visually</li>
+            <li class="fragment fade-left">
+              XState can replace some other libraries or be used with others
+            </li>
+            <li class="fragment fade-left">
+              Requires you to think in a new mental model
+            </li>
+            <li class="fragment fade-left">XState can be overwhelming</li>
+          </ul>
+
+          <aside class="notes">
+            <ul>
+              <li>
+                You are forced to think about and describe the behaviour of your
+                app before implementing
+              </li>
+              <li>Makes sure there are no impossible states in your code</li>
+              <li>Might be a good thing</li>
+              <li>You can pretty much replace redux with xstate</li>
+              <li>From boolean flags to states</li>
+              <li>
+                A state machine with hundreds of lines of config code can seem
+                like you are just moving your spaghetti from a plate to another.
+                You might be, I'm sure you can make bad state machines as well.
+                I'm sure I've made quite a few.
+              </li>
+            </ul>
+          </aside>
+        </section>
+
+        <section>
+          <h2>
+            Add state machines to your
+            <span class="red">developer toolbox</span>!
+          </h2>
+
+          <p>
+            Next time you are adding a third boolean flag to your component,
+            think to yourself, <em>"could this be a state machine?"</em>
+          </p>
+
+          <aside class="notes">
+            <ul>
+              <li>
+                If you want to take just one thing from this presentation, take
+                this.
+              </li>
+              <li>
+                You don't need to use any library at all, you don't event have
+                to do a full fledged FSM. Just replace multiple booleans with
+                one state variable with multiple, predefined values.
+              </li>
+            </ul>
+          </aside>
+        </section>
+
+        <section>
+          <h2><span class="red">Thank you</span> for your time.</h2>
+          <p>Any questions?</p>
+
+          <div
+            style="
+              font-size: 0.5em;
+              display: flex;
+              flex-direction: row;
+              justify-content: space-evenly;
+            "
+          >
+            <div>
+              <h4>Links</h4>
+              <ul>
+                <li><a href="https://xstate.js.org">xstate.js.org</a></li>
+                <li>
+                  <a href="https://xstate-catalogue.com"
+                    >xstate-catalogue.com</a
+                  >
+                </li>
+                <li>
+                  <a href="https://stately.ai/registry">stately.ai/registry</a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4>Sources</h4>
+              <ul>
+                <li><a href="https://statecharts.dev/">statecharts.dev</a></li>
+                <li>
+                  <a href="https://en.wikipedia.org/wiki/Finite-state_machine"
+                    >Wikipedia</a
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <aside class="notes">
+            <ul>
+              <li>Thanks for your time!</li>
+              <li>Any Q's? I can try my best to give you some A's.</li>
+            </ul>
+          </aside>
+        </section>
+      </div>
+    </div>
+
+    <script src="reveal-js/dist/reveal.js"></script>
+    <script src="reveal-js/plugin/notes/notes.js"></script>
+    <script src="reveal-js/plugin/markdown/markdown.js"></script>
+    <script src="reveal-js/plugin/highlight/highlight.js"></script>
+    <script>
+      Reveal.initialize({
+        hash: true,
+        controls: false,
+        showNotes: "separate-page",
+        pdfSeparateFragments: false,
+        plugins: [RevealMarkdown, RevealHighlight, RevealNotes],
+      });
+    </script>
+  </body>
+</html>
