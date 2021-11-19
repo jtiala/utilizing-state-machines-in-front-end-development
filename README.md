@@ -1,6 +1,6 @@
 # Utilizing state machines in front-end development
 
-A presentation about state machines, statecharts and XState made with [Reveal.js](https://revealjs.com). The PDF export found in the repository includes pretty comprehensive speaker notes, so it should be possible to get the main idea of the presentation just by skimming through the PDF.
+A presentation about state machines, statecharts and XState made with [Reveal.js](https://revealjs.com). The [PDF export](utilizing-state-machines-in-front-end-development.pdf) found in the repository includes pretty comprehensive speaker notes, so it should be possible to get the main idea of the presentation just by skimming through the PDF.
 
 ## Sources and resources
 
